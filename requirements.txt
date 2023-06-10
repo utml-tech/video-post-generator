@@ -1,0 +1,5 @@
+setuptools-rust
+openai-whisper
+
+fire
+faster-whisper
