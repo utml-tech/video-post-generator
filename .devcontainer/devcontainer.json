@@ -43,9 +43,6 @@
 				"ms-python.vscode-pylance",
 				"ms-toolsai.jupyter",
 				"ms-azuretools.vscode-docker",
-				"bungcip.better-toml",
-				"Gruntfuggly.todo-tree",
-				"qwtel.sqlite-viewer",
 				"GitHub.copilot-nightly"
 			]
 		}
