@@ -2,11 +2,17 @@
 
 Transforms a video input into a proper blog post
 
-## functions
+## General Algorithm
 
-1. upload to youtube
-2. write transcript
-3. post on website (open PR)
+1. get video
+2. extract audio file
+3. send audio file to server via ssh
+4. get full transcript from audio
+5. get subtitles .srt file from audio
+6. summarize transcrip with LLM
+7. upload video to youtube with subtitles and thumbnail
+8. create .md post with youtube link, summary, and transcript
+9. open PR adding .md file to website repo
 
 ## references
 
@@ -14,6 +20,7 @@ Transforms a video input into a proper blog post
 - https://github.com/Hannibal046/Awesome-LLM
 - https://github.com/openai/whisper
 - https://github.com/guillaumekln/faster-whisper
+- https://sns-sdks.lkhardy.cn/python-youtube/usage/work-with-client/#insert
 
 ## transcription
 

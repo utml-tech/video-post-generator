@@ -5,3 +5,6 @@ fire
 faster-whisper
 
 fschat
+
+python-dotenv
+python-youtube
