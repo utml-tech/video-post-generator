@@ -6,10 +6,10 @@ Transforms a video input into a proper blog post
 
 1. get video
 2. extract audio file
-3. send audio file to server via ssh
-4. get full transcript from audio
-5. get subtitles .srt file from audio
-6. summarize transcrip with LLM
+3. send audio file to server via ssh (remote)
+4. get full transcript from audio (remote)
+5. get subtitles .srt file from audio (remote)
+6. summarize transcript with LLM (remote)
 7. upload video to youtube with subtitles and thumbnail
 8. create .md post with youtube link, summary, and transcript
 9. open PR adding .md file to website repo

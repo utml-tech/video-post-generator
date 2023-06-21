@@ -1,10 +1,10 @@
-setuptools-rust
-openai-whisper
-
-fire
 faster-whisper
-
+ffmpeg-python
+fire
 fschat
-
+openai-whisper
 python-dotenv
 python-youtube
+rich
+setuptools-rust
+tqdm

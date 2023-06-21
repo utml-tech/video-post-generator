@@ -51,4 +51,43 @@ if __name__ == '__main__':
 
 
 
+def upload_video(filepath: Path) -> None:
+    metadata = ffmpeg.probe(videofile)
+    creation_time = metadata["format"]["tags"]["creation_time"]
+
+    datetime_object = datetime.strptime(creation_time, "%Y-%m-%dT%H:%M:%S.%fZ")
+    creation_time = datetime_object.strftime("%Y/%m/%d")
+
+    # authorize
+    cli = Client(client_id=os.getenv("YOUTUBE_CLIENT_ID"), client_secret=os.getenv("YOUTUBE_CLIENT_SECRET"))
+    print(cli.get_authorize_url())
+    cli.generate_access_token(authorization_response=input("Enter the url: "))
+
+    body = Video(
+        snippet=VideoSnippet(
+            title="UTML Meeting {creation_time}",
+            description=dedent(""""""),
+            # TODO: description from LLM
+            # TODO: thumbnails=Thumbnails()
+            # TODO: captions (Whisper)
+            # TODO: translated captions
+            # TODO: dubbing (AI)
+            # TODO: auto editing (5min)
+        )
+    )
+
+    media = Media(filename=filepath)
+
+    upload = cli.videos.insert(
+        body=body,
+        media=media,
+        parts=["snippet"],
+        notify_subscribers=True
+    )
+
+    video_body = None
+    while video_body is None:
+        status, video_body = upload.next_chunk()
+        if status:
+            print(f"Upload progress: {status.progress()}")
 
