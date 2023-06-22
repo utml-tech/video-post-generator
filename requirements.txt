@@ -1,10 +1,14 @@
+einops
 faster-whisper
 ffmpeg-python
 fire
 fschat
 openai-whisper
+optimum
+pyinfra
 python-dotenv
 python-youtube
 rich
 setuptools-rust
 tqdm
+triton-pre-mlir@git+https://github.com/vchiley/triton.git@triton_pre_mlir#subdirectory=python
