@@ -23,16 +23,17 @@ import ffmpeg
 
 from pathlib import Path
 
-from .infra import install_pip_dependencies, put_many, server_shell
+from .infra import get_many, install_pip_dependencies, put_many, server_shell
 
 class Scripts(str, Enum):
     transcribe = "scripts/transcribe.py"
-    summarize = "scripts/summarize.py"
+    generate = "scripts/generate.py"
 
     @classmethod
-    def put_in_remote(cls, remote_basepath: Path) -> dict[str, Path]:
-        new_paths = put_many([s.value for s in cls], remote_basepath)
-        return dict(zip(cls, new_paths))
+    def put_in_remote(cls, remote_basepath: Path) -> dict[Path, Path]:
+        filepaths = {s.value: remote_basepath / s.value for s in cls}
+        put_many(filepaths)
+        return filepaths
 
 @dataclass
 class Video:
@@ -76,14 +77,11 @@ class Video:
     def remote(self) -> Video:
         return Video(self.remote_basepath / self.filepath.name)
     
-    def _get_property_filepath(self, dir: str, suffix: str) -> Path:
-        return self.filepath.parent / dir / self.filepath.with_suffix(suffix).name
-    
-    def _prepare_remote(self) -> None:
-        self.scripts = Scripts.put_in_remote(self.remote_basepath)
-        self.python = install_pip_dependencies(venv=os.environ["VENV_PATH"])
-
-        put_many([self.audio], self.remote_basepath)
+    def _get_property_filepath(self, name: str, suffix: str) -> Path:
+        # return self.filepath.parent / dir / self.filepath.with_suffix(suffix).name
+        directory = self.filepath.parent / self.filepath.stem
+        directory.mkdir(exist_ok=True)
+        return (directory / name).with_suffix(suffix)
 
     def _extract_audio(self) -> None:
         if self.audio.exists():
@@ -101,10 +99,36 @@ class Video:
         self._call_script(Scripts.transcribe, filepath=self.remote.audio, output=self.remote.transcription)
         
     def _summarize(self):
-        self._call_script(Scripts.summarize, filepath=self.remote.transcription, output=self.remote.summary)
+        prompt = dedent("""'
+        # UTML Meeting
+
+        ## Transcription
+        Here is the transcription of our last meeting:
+            
+        {text}
+
+        ## Topics
+
+        In this meeting we discussed the following topics:
+        -'""").strip()
+
+        self._call_script(Scripts.generate, prompt=prompt, filepath=self.remote.transcription, output=self.remote.summary, max_output_new_tokens=2048)
 
     def _describe(self):
-        self._call_script(Scripts.describe, filepath=self.remote.summary, output=self.remote.description)
+        prompt = dedent("""'
+        # UTML Meeting
+
+        ## Topics
+
+        In this meeting we discussed the following topics:
+
+        {text}
+
+        ## TL;DR
+
+        Meeting summary in 100 words:
+        '""").strip()
+        self._call_script(Scripts.generate, prompt=prompt, filepath=self.remote.summary, output=self.remote.description, max_output_new_tokens=256)
 
     def _get_all(self):
         get_many({
@@ -112,5 +136,69 @@ class Video:
             self.remote.summary: self.summary,
             self.remote.description: self.description,
         })
+
+    def _authorize(self):
+        cli = Client(client_id=os.getenv("YOUTUBE_CLIENT_ID"), client_secret=os.getenv("YOUTUBE_CLIENT_SECRET"))
+        print(cli.get_authorize_url())
+        cli.generate_access_token(authorization_response=input("Enter the url: "))
+        return cli
+
+    def _upload(self):
+        cli = self._authorize()
+        creation_time = self.creation_time.strftime("%Y/%m/%d")
+
+        body = Video(
+            snippet=VideoSnippet(
+                title=f"UTML Meeting {creation_time}",
+                description=self.description.read_text(),
+                # TODO: description from LLM
+                # TODO: thumbnails=Thumbnails()
+                # TODO: captions (Whisper)
+                # TODO: translated captions
+                # TODO: dubbing (AI)
+                # TODO: auto editing (5min)
+            )
+        )
+
+        media = Media(filename=self.filepath)
+
+        upload = cli.videos.insert(
+            body=body,
+            media=media,
+            parts=["snippet"],
+            notify_subscribers=True
+        )
+
+        video_body = None
+        while video_body is None:
+            status, video_body = upload.next_chunk()
+            if status:
+                print(f"Upload progress: {status.progress()}")
+
+
+    def run(self) -> None:
+        self._extract_audio()
+
+        # prepare remote environment
+        apt.packages(
+            name="Install APT dependencies",
+            packages=["build-essential"],
+            # update=True,
+        )
+
+        self.scripts = Scripts.put_in_remote(self.remote_basepath)
+        self.python = install_pip_dependencies(venv=os.environ["VENV_PATH"])
+        put_many({self.audio: self.remote.audio})
+
+        # run scripts
+        self._transcribe()
+        self._summarize()
+        self._describe()     
+
+        # download results
+        self._get_all()   
+
+        # upload to youtube
+        # self._upload()
 
         

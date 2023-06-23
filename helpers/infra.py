@@ -8,11 +8,19 @@ from pathlib import Path
 def server_shell(cmd: str):
     return server.shell(dedent(cmd).replace("\n", " ").strip())
 
-def put_many(filepaths: list[Path], remote_basepath: Path) -> None:
-    filepaths = list(map(Path, filepaths))
-    remote_paths = [remote_basepath / filepath.name for filepath in filepaths]
+def get_many(filepaths: dict[Path, Path]) -> None:
+    for remote, local in filepaths.items():
+        files.get(
+            name=f"Download remote {remote} to {local}",
+            src=str(remote), 
+            dest=str(local), 
+            add_deploy_dir = True,
+            create_local_dir = False,
+            force = False
+        )
 
-    for local, remote in zip(filepaths, remote_paths):
+def put_many(filepaths: dict[Path, Path]) -> None:
+    for local, remote in filepaths.items():
         files.put(
             name=f"Upload {local} to remote {remote}",
             src=str(local), 
@@ -26,7 +34,26 @@ def put_many(filepaths: list[Path], remote_basepath: Path) -> None:
             assume_exists=False,
         )
 
-    return remote_paths
+
+# def put_many(filepaths: list[Path], remote_basepath: Path) -> None:
+#     filepaths = list(map(Path, filepaths))
+#     remote_paths = [remote_basepath / filepath.name for filepath in filepaths]
+
+#     for local, remote in zip(filepaths, remote_paths):
+#         files.put(
+#             name=f"Upload {local} to remote {remote}",
+#             src=str(local), 
+#             dest=str(remote), 
+#             user=os.environ["USER_ID"], 
+#             group=os.environ["GROUP_ID"], 
+#             mode=None, 
+#             add_deploy_dir=True, 
+#             create_remote_dir=True,
+#             force=False, 
+#             assume_exists=False,
+#         )
+
+#     return remote_paths
 
 def install_pip_dependencies(venv: str, requirements = Path.cwd() / "requirements.txt") -> None:
     python = Path(venv) / "bin" / "python"

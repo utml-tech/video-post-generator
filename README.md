@@ -12,7 +12,7 @@ Transforms a video input into a proper blog post
 6. summarize transcript with LLM (remote)
 7. upload video to youtube with subtitles and thumbnail
 8. create .md post with youtube link, summary, and transcript
-9. open PR adding .md file to website repo
+9. open PR adding .md file to website repo (jinja2)
 
 ## references
 

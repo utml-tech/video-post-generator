@@ -1,3 +1,5 @@
+accelerate
+bitsandbytes
 einops
 faster-whisper
 ffmpeg-python
@@ -9,6 +11,8 @@ pyinfra
 python-dotenv
 python-youtube
 rich
+scipy
 setuptools-rust
 tqdm
+bitsandbytes
 triton-pre-mlir@git+https://github.com/vchiley/triton.git@triton_pre_mlir#subdirectory=python
